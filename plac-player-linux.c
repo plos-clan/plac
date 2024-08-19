@@ -558,7 +558,6 @@ static FT *MDCT(_block)(MDCT(_t) mdct) {
 typedef void (*cb_plac_decompress_t)(f32 *block, size_t len, void *userdata);
 
 typedef struct plac_decompress {
-  size_t               block_len;
   mdctf_t              mdct;
   struct quantized     q;
   mistream_t           stream;
@@ -566,12 +565,13 @@ typedef struct plac_decompress {
   void                *userdata;
 } *plac_decompress_t;
 
+#define block_len 2048
+
 void _plac_decompress_block(f32 *block, void *_plac);
 
-plac_decompress_t plac_decompress_alloc(const void *buffer, size_t size, size_t block_len) {
+plac_decompress_t plac_decompress_alloc(const void *buffer, size_t size) {
   plac_decompress_t plac = malloc(sizeof(struct plac_decompress));
   if (plac == NULL) return NULL;
-  plac->block_len      = block_len;
   plac->mdct           = mdctf_alloc(2 * block_len, true, _plac_decompress_block);
   plac->mdct->userdata = plac;
   plac->q.max          = 0;
@@ -636,15 +636,15 @@ void plac_read_data(plac_decompress_t plac, quantized_t q) {
 
 void _plac_decompress_block(f32 *block, void *_plac) {
   plac_decompress_t plac = _plac;
-  if (plac->callback) plac->callback(block, plac->block_len, plac->userdata);
+  if (plac->callback) plac->callback(block, block_len, plac->userdata);
 }
 
 bool plac_decompress_block(plac_decompress_t plac) {
   if (plac->stream->pos == plac->stream->size) return false;
   plac_read_data(plac, &plac->q);
   dequantize(&plac->q);
-  mulaw_expand(plac->q.dataf, plac->block_len);
-  mdctf_put(plac->mdct, plac->q.dataf, plac->block_len);
+  mulaw_expand(plac->q.dataf, block_len);
+  mdctf_put(plac->mdct, plac->q.dataf, block_len);
   return true;
 }
 
@@ -652,8 +652,6 @@ bool plac_decompress_block(plac_decompress_t plac) {
 //; 播放
 
 snd_pcm_t *pcm_out;
-
-#define N 1024 // 必须为 1024
 
 void play_audio(f32 *block, size_t len, void *userdata) {
   f32 volume = *(f32 *)userdata;
@@ -687,7 +685,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  plac_decompress_t dctx = plac_decompress_alloc(buf, bufsize, N);
+  plac_decompress_t dctx = plac_decompress_alloc(buf, bufsize);
   dctx->callback         = play_audio;
   dctx->userdata         = &volume;
 
