@@ -15,5 +15,5 @@ windows 环境
 
 # 资源下载地址
 
-[蓝奏云](https://wwyp.lanzoul.com/b002u8dyyd)<br>
+[蓝奏云](https://wwyp.lanzoul.com/b002u8dyyd) (下载后请自行删除文件的 `.txt` 后缀)<br>
 密码: dy9j
