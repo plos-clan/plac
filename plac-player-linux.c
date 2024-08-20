@@ -170,7 +170,7 @@ typedef struct quantized {
   i16   *datai;
 } *quantized_t;
 
-void dequantize(quantized_t q) {
+static void dequantize(quantized_t q) {
   f32 max = (f32)q->max / 256;
   f32 min = (f32)q->min / 256;
   if (q->nbit == 0) {
@@ -567,9 +567,9 @@ typedef struct plac_decompress {
 
 #define block_len 2048
 
-void _plac_decompress_block(f32 *block, void *_plac);
+static void _plac_decompress_block(f32 *block, void *_plac);
 
-plac_decompress_t plac_decompress_alloc(const void *buffer, size_t size) {
+static plac_decompress_t plac_decompress_alloc(const void *buffer, size_t size) {
   plac_decompress_t plac = malloc(sizeof(struct plac_decompress));
   if (plac == NULL) return NULL;
   plac->mdct           = mdctf_alloc(2 * block_len, true, _plac_decompress_block);
@@ -589,7 +589,7 @@ plac_decompress_t plac_decompress_alloc(const void *buffer, size_t size) {
   return plac;
 }
 
-void plac_decompress_free(plac_decompress_t plac) {
+static void plac_decompress_free(plac_decompress_t plac) {
   if (plac == NULL) return;
   mdctf_free(plac->mdct);
   mistream_free(plac->stream);
@@ -598,7 +598,7 @@ void plac_decompress_free(plac_decompress_t plac) {
   free(plac);
 }
 
-bool plac_read_header(plac_decompress_t plac, u16 *samplerate, u32 *nsamples) {
+static bool plac_read_header(plac_decompress_t plac, u16 *samplerate, u32 *nsamples) {
   u32 magic;
   mistream_read(plac->stream, &magic, 4);
   if (magic != MAGIC32('p', 'l', 'a', 'c')) return false;
@@ -610,7 +610,7 @@ bool plac_read_header(plac_decompress_t plac, u16 *samplerate, u32 *nsamples) {
   return true;
 }
 
-void plac_read_data(plac_decompress_t plac, quantized_t q) {
+static void plac_read_data(plac_decompress_t plac, quantized_t q) {
   mistream_read(plac->stream, &q->nbit, 2);
   mistream_read(plac->stream, &q->max, 2);
   if (q->nbit == 0) return;
@@ -634,12 +634,12 @@ void plac_read_data(plac_decompress_t plac, quantized_t q) {
   free(buf);
 }
 
-void _plac_decompress_block(f32 *block, void *_plac) {
+static void _plac_decompress_block(f32 *block, void *_plac) {
   plac_decompress_t plac = _plac;
   if (plac->callback) plac->callback(block, block_len, plac->userdata);
 }
 
-bool plac_decompress_block(plac_decompress_t plac) {
+static bool plac_decompress_block(plac_decompress_t plac) {
   if (plac->stream->pos == plac->stream->size) return false;
   plac_read_data(plac, &plac->q);
   dequantize(&plac->q);
@@ -653,7 +653,7 @@ bool plac_decompress_block(plac_decompress_t plac) {
 
 snd_pcm_t *pcm_out;
 
-void play_audio(f32 *block, size_t len, void *userdata) {
+static void play_audio(f32 *block, size_t len, void *userdata) {
   f32 volume = *(f32 *)userdata;
   if (volume != 1) {
     for (size_t i = 0; i < len; i++) {
