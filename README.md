@@ -12,6 +12,7 @@ linux 环境
 
 ```sh
 cc plac-player-linux.c -o plac-player -Ofast -lm -lasound
+cc plac-encoder-linux.c -o plac-encoder -Ofast -lm -lavcodec -lavformat -lavutil -lswresample
 ```
 
 windows 环境
