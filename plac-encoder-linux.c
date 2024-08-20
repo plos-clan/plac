@@ -676,13 +676,13 @@ static void plac_compress_free(plac_compress_t plac) {
   free(plac);
 }
 
-static void plac_write_header(plac_compress_t plac, u16 samplerate, u32 nsamples) {
+static void plac_write_header(plac_compress_t plac, u32 samplerate, u64 nsamples) {
   u32 magic = MAGIC32('p', 'l', 'a', 'c');
   mostream_write(plac->stream, &magic, 4);
-  u16 version = 0;
+  u16 version = 1;
   mostream_write(plac->stream, &version, 2);
-  mostream_write(plac->stream, &samplerate, 2);
-  mostream_write(plac->stream, &nsamples, 4);
+  mostream_write(plac->stream, &samplerate, 4);
+  mostream_write(plac->stream, &nsamples, 8);
 }
 
 static void plac_write_data(plac_compress_t plac, quantized_t q) {
