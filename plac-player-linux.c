@@ -598,15 +598,21 @@ static void plac_decompress_free(plac_decompress_t plac) {
   free(plac);
 }
 
-static bool plac_read_header(plac_decompress_t plac, u16 *samplerate, u32 *nsamples) {
+static bool plac_read_header(plac_decompress_t plac, u32 *samplerate, u64 *nsamples) {
   u32 magic;
   mistream_read(plac->stream, &magic, 4);
   if (magic != MAGIC32('p', 'l', 'a', 'c')) return false;
   u16 version;
   mistream_read(plac->stream, &version, 2);
-  if (version != 0) return false;
-  mistream_read(plac->stream, samplerate, 2);
-  mistream_read(plac->stream, nsamples, 4);
+  if (version >= 3) return false;
+  *samplerate = 0, *nsamples = 0;
+  if (version == 0) {
+    mistream_read(plac->stream, samplerate, 2);
+    mistream_read(plac->stream, nsamples, 4);
+  } else {
+    mistream_read(plac->stream, samplerate, 4);
+    mistream_read(plac->stream, nsamples, 8);
+  }
   return true;
 }
 
@@ -689,8 +695,8 @@ int main(int argc, char **argv) {
   dctx->callback         = play_audio;
   dctx->userdata         = &volume;
 
-  u16 samplerate;
-  u32 nsamples;
+  u32 samplerate;
+  u64 nsamples;
   plac_read_header(dctx, &samplerate, &nsamples);
 
   snd_pcm_open(&pcm_out, "default", SND_PCM_STREAM_PLAYBACK, 0);
